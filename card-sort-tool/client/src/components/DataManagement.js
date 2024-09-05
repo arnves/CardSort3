@@ -47,7 +47,9 @@ function DataManagement({ token }) {
         const sessionName = session.name;
 
         const unsortedCards = session.unsortedCards.map(card => ({
+          sessionId: session.id,
           sessionName,
+          cardId: card.id,
           cardTitle: card.title,
           cardContent: card.text,
           categoryName: 'Unsorted'
@@ -55,7 +57,9 @@ function DataManagement({ token }) {
 
         const categorizedCards = Object.values(session.categories).flatMap(category =>
           category.cards.map(card => ({
+            sessionId: session.id,
             sessionName,
+            cardId: card.id,
             cardTitle: card.title,
             cardContent: card.text,
             categoryName: category.name
@@ -89,7 +93,7 @@ function DataManagement({ token }) {
         />
       </SessionListContainer>
       <TableContainer>
-        <SessionDataTable data={tableData} />
+        <SessionDataTable data={tableData} token={token} />
       </TableContainer>
     </DataManagementContainer>
   );
