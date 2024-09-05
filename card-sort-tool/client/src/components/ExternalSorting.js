@@ -7,7 +7,7 @@ import CardSortingArea from './CardSortingArea';
 const ExternalSortingContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
 `;
 
 const PasswordPrompt = styled.div`
@@ -16,6 +16,12 @@ const PasswordPrompt = styled.div`
   align-items: center;
   justify-content: center;
   height: 100vh;
+`;
+
+const SubmitButtonContainer = styled.div`
+  padding: 20px;
+  background-color: #f0f0f0;
+  border-top: 1px solid #ccc;
 `;
 
 const SubmitButton = styled.button`
@@ -27,10 +33,19 @@ const SubmitButton = styled.button`
   cursor: pointer;
   font-size: 16px;
   margin-top: 20px;
+  width: 100%;
+  max-width: 300px;
+  display: block;
+  margin: 0 auto;
 
   &:hover {
     background-color: #45a049;
   }
+`;
+
+const SortingContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
 `;
 
 function ExternalSorting() {
@@ -214,17 +229,21 @@ function ExternalSorting() {
 
   return (
     <ExternalSortingContainer>
-      <h1>External Card Sorting Session</h1>
-      <CardSortingArea
-        session={session}
-        apiUrl={`${process.env.REACT_APP_API_URL}/external-sorting/${id}`}
-        authHeader={{ 'X-Password': password }}
-        onCreateCategory={handleCreateCategory}
-        onRenameCategory={handleRenameCategory}  // Pass the handleRenameCategory function here
-        onDeleteCategory={handleDeleteCategory}
-        onMoveCard={handleMoveCard}
-      />
-      <SubmitButton onClick={handleSubmit}>Submit Sorting Session</SubmitButton>
+      <SortingContent>
+        <h1>External Card Sorting Session</h1>
+        <CardSortingArea
+          session={session}
+          apiUrl={`${process.env.REACT_APP_API_URL}/external-sorting/${id}`}
+          authHeader={{ 'X-Password': password }}
+          onCreateCategory={handleCreateCategory}
+          onRenameCategory={handleRenameCategory}  // Pass the handleRenameCategory function here
+          onDeleteCategory={handleDeleteCategory}
+          onMoveCard={handleMoveCard}
+        />
+      </SortingContent>
+      <SubmitButtonContainer>
+        <SubmitButton onClick={handleSubmit}>Submit Sorting Session</SubmitButton>
+      </SubmitButtonContainer>
     </ExternalSortingContainer>
   );
 }
