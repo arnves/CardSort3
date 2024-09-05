@@ -9,7 +9,7 @@ import ManageCardSetsModal from './components/ManageCardSetsModal';
 import DataAnalysis from './components/DataAnalysis';
 import ExternalSorting from './components/ExternalSorting';
 import ShareSessionModal from './components/ShareSessionModal';
-import { FaSignOutAlt, FaCopy } from 'react-icons/fa';
+import { FaSignOutAlt, FaCopy, FaSync } from 'react-icons/fa';
 
 const AppContainer = styled.div`
   display: flex;
@@ -83,6 +83,16 @@ const ShareButton = styled(Button)`
 `;
 
 const CopyIcon = styled(FaCopy)`
+  margin-left: 5px;
+  cursor: pointer;
+  color: #007bff;
+  
+  &:hover {
+    color: #0056b3;
+  }
+`;
+
+const RefreshIcon = styled(FaSync)`
   margin-left: 5px;
   cursor: pointer;
   color: #007bff;
@@ -317,6 +327,39 @@ function App() {
     });
   };
 
+  const refreshSession = useCallback(async () => {
+    if (currentSession) {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // Update the current session state
+        setCurrentSession(prevSession => {
+          const updatedSession = { ...response.data };
+          
+          // Ensure the categories are properly structured and names are updated
+          updatedSession.categories = Object.fromEntries(
+            Object.entries(response.data.categories).map(([id, category]) => [
+              id,
+              {
+                ...category,
+                name: category.name, // Ensure the name is updated
+                cards: Array.isArray(category.cards) ? category.cards : []
+              }
+            ])
+          );
+          
+          return updatedSession;
+        });
+        
+        await fetchSharingStatus(currentSession.id);
+      } catch (error) {
+        console.error('Error refreshing session:', error);
+      }
+    }
+  }, [currentSession, token, fetchSharingStatus]);
+
   const handleCreateCategory = async (newCategoryName) => {
     try {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}/categories`, 
@@ -477,10 +520,13 @@ function App() {
                           {isSharing ? 'Sharing Session' : 'Share Session'}
                         </ShareButton>
                         {isSharing && (
-                          <TooltipContainer>
-                            <CopyIcon onClick={handleCopyShareUrl} />
-                            <Tooltip>{sharingUrl}</Tooltip>
-                          </TooltipContainer>
+                          <>
+                            <TooltipContainer>
+                              <CopyIcon onClick={handleCopyShareUrl} />
+                              <Tooltip>{sharingUrl}</Tooltip>
+                            </TooltipContainer>
+                            <RefreshIcon onClick={refreshSession} />
+                          </>
                         )}
                         {copyNotification && <span>{copyNotification}</span>}
                       </MenuGroup>
@@ -490,6 +536,7 @@ function App() {
                     </MenuBar>
                     {currentSession && (
                       <CardSortingArea
+                        key={JSON.stringify(currentSession.categories)}
                         session={currentSession}
                         apiUrl={`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}`}
                         authHeader={{ Authorization: `Bearer ${token}` }}
