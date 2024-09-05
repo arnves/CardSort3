@@ -318,11 +318,27 @@ function App() {
   };
 
   const handleCreateCategory = async (newCategoryName) => {
-    const response = await axios.post(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}/categories`, 
-      { name: newCategoryName },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return response.data;
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}/categories`, 
+        { name: newCategoryName },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const newCategory = response.data;
+      
+      // Update the current session with the new category
+      setCurrentSession(prevSession => ({
+        ...prevSession,
+        categories: {
+          ...prevSession.categories,
+          [newCategory.id]: { id: newCategory.id, name: newCategory.name, cards: [] }
+        }
+      }));
+
+      return newCategory;
+    } catch (error) {
+      console.error('Error creating category:', error);
+      throw error;
+    }
   };
 
   const handleRenameCategory = async (categoryId, newName) => {
