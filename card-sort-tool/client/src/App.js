@@ -9,6 +9,7 @@ import ManageCardSetsModal from './components/ManageCardSetsModal';
 import DataAnalysis from './components/DataAnalysis';
 import ExternalSorting from './components/ExternalSorting';
 import ShareSessionModal from './components/ShareSessionModal';
+import DataManagement from './components/DataManagement';
 import { FaSignOutAlt, FaCopy, FaSync } from 'react-icons/fa';
 
 const AppContainer = styled.div`
@@ -140,6 +141,30 @@ const Tooltip = styled.span`
   }
 `;
 
+const StageBar = styled.div`
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+`;
+
+const StageButton = styled.button`
+  background-color: ${props => props.$active ? '#007bff' : '#e0e0e0'};
+  color: ${props => props.$active ? 'white' : 'black'};
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  margin: 0 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: ${props => props.$active ? '#0056b3' : '#d0d0d0'};
+  }
+`;
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState(null);
@@ -148,7 +173,7 @@ function App() {
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [selectedCardSets, setSelectedCardSets] = useState([]);
-  const [mode, setMode] = useState('dataCollection');
+  const [stage, setStage] = useState('dataCollection');
   const [showShareModal, setShowShareModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [sharingUrl, setSharingUrl] = useState('');
@@ -492,17 +517,27 @@ function App() {
                     Logout
                   </LogoutButton>
                 </TitleBar>
-                <MenuBar>
-                  <MenuGroup>
-                    <Button onClick={() => setMode('dataCollection')} style={{ backgroundColor: mode === 'dataCollection' ? '#0056b3' : '#007bff' }}>
-                      Data Collection
-                    </Button>
-                    <Button onClick={() => setMode('dataAnalysis')} style={{ backgroundColor: mode === 'dataAnalysis' ? '#0056b3' : '#007bff' }}>
-                      Data Analysis
-                    </Button>
-                  </MenuGroup>
-                </MenuBar>
-                {mode === 'dataCollection' ? (
+                <StageBar>
+                  <StageButton 
+                    onClick={() => setStage('dataCollection')} 
+                    $active={stage === 'dataCollection'}
+                  >
+                    Data Collection
+                  </StageButton>
+                  <StageButton 
+                    onClick={() => setStage('dataManagement')} 
+                    $active={stage === 'dataManagement'}
+                  >
+                    Data Management
+                  </StageButton>
+                  <StageButton 
+                    onClick={() => setStage('dataAnalysis')} 
+                    $active={stage === 'dataAnalysis'}
+                  >
+                    Data Analysis
+                  </StageButton>
+                </StageBar>
+                {stage === 'dataCollection' && (
                   <>
                     <MenuBar>
                       <MenuGroup>
@@ -563,7 +598,11 @@ function App() {
                       />
                     )}
                   </>
-                ) : (
+                )}
+                {stage === 'dataManagement' && (
+                  <DataManagement token={token} />
+                )}
+                {stage === 'dataAnalysis' && (
                   <DataAnalysis token={token} />
                 )}
               </>

@@ -29,7 +29,7 @@ const SessionDetails = styled.p`
   color: #666;
 `;
 
-function SessionList({ token, onSessionSelect }) {
+function SessionList({ token, selectedSessions, onSessionSelect }) {
   const [sessions, setSessions] = useState([]);
 
   useEffect(() => {
@@ -56,7 +56,12 @@ function SessionList({ token, onSessionSelect }) {
           <SessionDetails>Number of cards: {session.card_count}</SessionDetails>
           <SessionDetails>Unsorted: {session.unsorted_count}</SessionDetails>
           <label>
-            <input type="checkbox" onChange={() => onSessionSelect(session.id)} /> Include in analysis
+            <input 
+              type="checkbox" 
+              checked={selectedSessions.includes(session.id)}
+              onChange={() => onSessionSelect(session.id)} 
+            /> 
+            Include in analysis
           </label>
         </SessionItem>
       ))}

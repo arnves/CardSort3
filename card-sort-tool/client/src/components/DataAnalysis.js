@@ -77,7 +77,11 @@ function DataAnalysis({ token }) {
         </MenuButton>
       </MenuBar>
       <ContentContainer>
-        <SessionList token={token} onSessionSelect={handleSessionSelect} />
+        <SessionList 
+          token={token} 
+          selectedSessions={selectedSessions} 
+          onSessionSelect={handleSessionSelect} 
+        />
         <AnalysisDiagram>
           {activeTab === 'similarityMatrix' && (
             <SimilarityMatrix token={token} selectedSessions={selectedSessions} />
