@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 
@@ -8,13 +8,14 @@ const MatrixTable = styled.table`
 `;
 
 const MatrixCell = styled.td`
-  background-color: ${props => `rgba(0, 0, 255, ${props.value})`};
+  background-color: ${props => props.isHighlighted ? '#ffff00' : `rgba(0, 0, 255, ${props.value})`};
   color: ${props => props.value > 0.5 ? 'white' : 'black'};
   text-align: center;
   width: 40px;
   height: 40px;
   font-size: 0.8em;
   padding: 0;
+  cursor: pointer;
 `;
 
 const CardNameCell = styled.td`
@@ -30,7 +31,7 @@ const CardNameSpan = styled.span`
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: white;
+  background-color: ${props => props.isHighlighted ? '#ffff00' : 'white'};
   padding: 2px 5px;
   border: 1px solid #ccc;
   border-radius: 3px;
@@ -39,6 +40,7 @@ const CardNameSpan = styled.span`
 function SimilarityMatrix({ token, selectedSessions }) {
   const [similarityMatrix, setSimilarityMatrix] = useState(null);
   const [cardNames, setCardNames] = useState([]);
+  const [highlightedCells, setHighlightedCells] = useState([]);
 
   useEffect(() => {
     const fetchCardData = async () => {
@@ -103,6 +105,15 @@ function SimilarityMatrix({ token, selectedSessions }) {
     return { matrix: normalizedMatrix, cards: allCards };
   };
 
+  const handleCellClick = useCallback((rowIndex, cellIndex) => {
+    if (rowIndex === cellIndex) return;
+    setHighlightedCells([rowIndex, cellIndex]);
+  }, []);
+
+  const isHighlighted = useCallback((rowIndex, cellIndex) => {
+    return highlightedCells.includes(rowIndex) && highlightedCells.includes(cellIndex);
+  }, [highlightedCells]);
+
   if (!similarityMatrix) {
     return <p>Select sessions to generate the similarity matrix.</p>;
   }
@@ -123,12 +134,20 @@ function SimilarityMatrix({ token, selectedSessions }) {
             <td>{rowIndex + 1}</td>
             {row.map((cell, cellIndex) => (
               cellIndex < rowIndex ? (
-                <MatrixCell key={cellIndex} value={cell}>
-                  {cell.toFixed(2)}
+                <MatrixCell
+                  key={cellIndex}
+                  value={cell}
+                  isHighlighted={isHighlighted(rowIndex, cellIndex)}
+                  onClick={() => handleCellClick(rowIndex, cellIndex)}
+                >
+                  {(cell * 100).toFixed(0)}
                 </MatrixCell>
               ) : cellIndex === rowIndex ? (
                 <CardNameCell key={cellIndex}>
-                  <CardNameSpan title={cardNames[rowIndex]}>
+                  <CardNameSpan 
+                    title={cardNames[rowIndex]}
+                    isHighlighted={highlightedCells.includes(rowIndex)}
+                  >
                     {cardNames[rowIndex]}
                   </CardNameSpan>
                 </CardNameCell>
