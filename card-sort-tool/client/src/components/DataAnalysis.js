@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import SessionList from './SessionList';
 import SimilarityMatrix from './SimilarityMatrix';
 import Dendrogram from './Dendrogram';
+import ClusterAnalysis from './ClusterAnalysis';
 
 const AnalysisContainer = styled.div`
   display: flex;
@@ -75,6 +76,12 @@ function DataAnalysis({ token }) {
         >
           Dendrogram
         </MenuButton>
+        <MenuButton 
+          active={activeTab === 'clusterAnalysis'} 
+          onClick={() => setActiveTab('clusterAnalysis')}
+        >
+          Cluster Analysis
+        </MenuButton>
       </MenuBar>
       <ContentContainer>
         <SessionList 
@@ -88,6 +95,9 @@ function DataAnalysis({ token }) {
           )}
           {activeTab === 'dendrogram' && (
             <Dendrogram token={token} selectedSessions={selectedSessions} />
+          )}
+          {activeTab === 'clusterAnalysis' && (
+            <ClusterAnalysis token={token} selectedSessions={selectedSessions} />
           )}
         </AnalysisDiagram>
       </ContentContainer>
