@@ -39,6 +39,7 @@ function SessionList({ token, selectedSessions, onSessionSelect }) {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSessions(response.data);
+        console.log('Fetched sessions:', response.data);
       } catch (error) {
         console.error('Error fetching sessions:', error);
       }
@@ -46,6 +47,10 @@ function SessionList({ token, selectedSessions, onSessionSelect }) {
 
     fetchSessions();
   }, [token]);
+
+  useEffect(() => {
+    console.log('Selected sessions:', selectedSessions);
+  }, [selectedSessions]);
 
   return (
     <SessionListContainer>
