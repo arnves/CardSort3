@@ -5,6 +5,7 @@ import axios from 'axios';
 function Dendrogram({ token, selectedSessions }) {
   const svgRef = useRef();
   const [dendrogramData, setDendrogramData] = useState(null);
+  const [agreementLevel, setAgreementLevel] = useState(0);
 
   useEffect(() => {
     const fetchCardData = async () => {
@@ -115,19 +116,30 @@ function Dendrogram({ token, selectedSessions }) {
 
     cluster(root);
 
+    // Calculate the maximum depth of the tree
+    const maxDepth = d3.max(root.descendants(), d => d.depth);
+
+    // Function to determine if a node should be visible based on agreement level
+    const isVisible = (d) => {
+      const nodeAgreement = 1 - (d.depth / maxDepth);
+      return nodeAgreement >= agreementLevel;
+    };
+
     svg.selectAll('path')
       .data(root.descendants().slice(1))
       .enter()
       .append('path')
       .attr('d', d => `M${d.y},${d.x}C${(d.parent.y + 100)},${d.x} ${(d.parent.y + 100)},${d.parent.x} ${d.parent.y},${d.parent.x}`)
       .style('fill', 'none')
-      .attr('stroke', '#ccc');
+      .attr('stroke', '#ccc')
+      .style('opacity', d => isVisible(d) ? 1 : 0.1);
 
     const node = svg.selectAll('g')
       .data(root.descendants())
       .enter()
       .append('g')
-      .attr('transform', d => `translate(${d.y},${d.x})`);
+      .attr('transform', d => `translate(${d.y},${d.x})`)
+      .style('opacity', d => isVisible(d) ? 1 : 0.1);
 
     node.append('circle')
       .attr('r', 4)
@@ -141,7 +153,7 @@ function Dendrogram({ token, selectedSessions }) {
       .style('text-anchor', d => d.children ? 'end' : 'start')
       .text(d => d.data.name);
 
-  }, [dendrogramData]);
+  }, [dendrogramData, agreementLevel]);
 
   if (!dendrogramData) {
     return <p>Select sessions to generate the dendrogram.</p>;
@@ -150,6 +162,18 @@ function Dendrogram({ token, selectedSessions }) {
   return (
     <div>
       <h2>Dendrogram</h2>
+      <div>
+        <label htmlFor="agreement-slider">Agreement Level: {(agreementLevel * 100).toFixed(0)}%</label>
+        <input
+          type="range"
+          id="agreement-slider"
+          min="0"
+          max="1"
+          step="0.01"
+          value={agreementLevel}
+          onChange={(e) => setAgreementLevel(parseFloat(e.target.value))}
+        />
+      </div>
       <svg ref={svgRef}></svg>
     </div>
   );
