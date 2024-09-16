@@ -8,6 +8,7 @@ const ClusterContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
 `;
 
 const SliderContainer = styled.div`
@@ -17,12 +18,15 @@ const SliderContainer = styled.div`
 const GraphContainer = styled.div`
   flex: 1;
   border: 1px solid #ccc;
+  position: relative;
 `;
 
 function ClusterAnalysis({ token, selectedSessions }) {
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [threshold, setThreshold] = useState(50);
-  const graphRef = useRef();
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef();
+  const forceGraphRef = useRef();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -97,22 +101,30 @@ function ClusterAnalysis({ token, selectedSessions }) {
   const filteredLinks = graphData.links.filter(link => link.value >= threshold / 100);
 
   useEffect(() => {
-    if (graphRef.current) {
-      const fg = graphRef.current;
-      fg.d3Force('link').distance(100).strength(0.1);
-      fg.d3Force('charge').strength(-300);
-      fg.d3Force('center', d3.forceCenter());
-      fg.d3Force('collide', d3.forceCollide(30));
-      
-      // Reheat the simulation and let it run for a while
-      fg.d3ReheatSimulation();
-      
-      // Zoom to fit after a short delay to ensure the graph has settled
-      setTimeout(() => {
-        fg.zoomToFit(400);
-      }, 500);
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  useEffect(() => {
+    if (forceGraphRef.current) {
+      forceGraphRef.current.d3Force('link').distance(100).strength(0.1);
+      forceGraphRef.current.d3Force('charge').strength(-300);
+      forceGraphRef.current.d3Force('center', d3.forceCenter(dimensions.width / 2, dimensions.height / 2));
+      forceGraphRef.current.d3Force('collide', d3.forceCollide(30));
+      forceGraphRef.current.d3ReheatSimulation();
     }
-  }, [graphData, filteredLinks, threshold]);
+  }, [dimensions, graphData, filteredLinks, threshold]);
 
   const handleThresholdChange = (e) => {
     setThreshold(parseInt(e.target.value));
@@ -131,9 +143,9 @@ function ClusterAnalysis({ token, selectedSessions }) {
           onChange={handleThresholdChange}
         />
       </SliderContainer>
-      <GraphContainer>
+      <GraphContainer ref={containerRef}>
         <ForceGraph2D
-          ref={graphRef}
+          ref={forceGraphRef}
           graphData={{ nodes: graphData.nodes, links: filteredLinks }}
           nodeLabel={node => `${node.id}\nCategories: ${node.categories.join(', ')}`}
           linkLabel={link => `${(link.value * 100).toFixed(2)}% agreement`}
@@ -169,8 +181,13 @@ function ClusterAnalysis({ token, selectedSessions }) {
           nodeCanvasObjectMode={() => 'replace'}
           linkWidth={link => Math.sqrt(link.value) * 5}
           linkColor={() => '#999'}
-          width={800}
-          height={600}
+          width={dimensions.width}
+          height={dimensions.height}
+          onEngineStop={() => {
+            if (forceGraphRef.current) {
+              forceGraphRef.current.zoomToFit(400);
+            }
+          }}
         />
       </GraphContainer>
     </ClusterContainer>

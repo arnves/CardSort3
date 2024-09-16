@@ -6,7 +6,34 @@ import axios from 'axios';
 
 const DataManagementContainer = styled.div`
   display: flex;
-  height: calc(100vh - 120px); // Adjust based on your header and stage bar height
+  flex-direction: column;
+  height: calc(100vh - 120px);
+`;
+
+const SubMenu = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  padding: 10px;
+  background-color: #f0f0f0;
+`;
+
+const Button = styled.button`
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 1rem;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  flex-grow: 1;
 `;
 
 const SessionListContainer = styled.div`
@@ -83,18 +110,85 @@ function DataManagement({ token }) {
     );
   };
 
+  const handleExportData = async () => {
+    if (selectedSessions.length === 0) {
+      alert("Please select at least one session to export.");
+      return;
+    }
+
+    try {
+      const exportData = [];
+
+      for (const sessionId of selectedSessions) {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/sessions/${sessionId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const session = response.data;
+        
+        // Process unsorted cards
+        session.unsortedCards.forEach(card => {
+          exportData.push({
+            session_id: session.id,
+            session_name: session.name,
+            card_title: card.title,
+            category_name: 'Unsorted'
+          });
+        });
+
+        // Process categorized cards
+        Object.values(session.categories).forEach(category => {
+          category.cards.forEach(card => {
+            exportData.push({
+              session_id: session.id,
+              session_name: session.name,
+              card_title: card.title,
+              category_name: category.name
+            });
+          });
+        });
+      }
+
+      // Convert to CSV
+      const headers = ['session_id', 'session_name', 'card_title', 'category_name'];
+      const csv = [
+        headers.join(','),
+        ...exportData.map(row => headers.map(field => `"${row[field]}"`).join(','))
+      ].join('\n');
+
+      // Create and download CSV file
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `sessions_export_${new Date().toISOString()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('Failed to export data. Please try again.');
+    }
+  };
+
   return (
     <DataManagementContainer>
-      <SessionListContainer>
-        <SessionList 
-          token={token}
-          selectedSessions={selectedSessions}
-          onSessionSelect={handleSessionSelect}
-        />
-      </SessionListContainer>
-      <TableContainer>
-        <SessionDataTable data={tableData} token={token} />
-      </TableContainer>
+      <SubMenu>
+        <Button onClick={handleExportData}>Export Data</Button>
+      </SubMenu>
+      <ContentContainer>
+        <SessionListContainer>
+          <SessionList 
+            token={token}
+            selectedSessions={selectedSessions}
+            onSessionSelect={handleSessionSelect}
+          />
+        </SessionListContainer>
+        <TableContainer>
+          <SessionDataTable data={tableData} token={token} />
+        </TableContainer>
+      </ContentContainer>
     </DataManagementContainer>
   );
 }

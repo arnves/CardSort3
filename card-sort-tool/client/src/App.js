@@ -275,23 +275,6 @@ function App() {
     setSelectedCardSets([]);
   };
 
-  const handleExportData = async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/sessions/${currentSession}/export`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `session_${currentSession}_export.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error exporting data:', error);
-    }
-  };
-
   const handleManageCards = () => {
     setShowManageModal(true);
   };
@@ -542,7 +525,6 @@ function App() {
                     <MenuBar>
                       <MenuGroup>
                         <Button onClick={handleCreateSession}>New Session</Button>
-                        <Button onClick={handleExportData}>Export Data</Button>
                         <Select
                           value={currentSession?.id || ''}
                           onChange={handleSessionChange}
