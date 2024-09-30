@@ -43,8 +43,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../../client/build')));
 
 // API routes
 const userRoutes = require('./routes/users');
@@ -59,8 +57,9 @@ app.use('/api/cards', cardRoutes);
 app.use('/api/card-sets', cardSetRoutes);
 app.use('/api/external-sorting', externalSortingRoutes);
 
-// Remove the basic route for '/'
 
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../../client/build')));
 // Catch-all route to serve the React app for any request that doesn't match an API route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../../client/build', 'index.html'));

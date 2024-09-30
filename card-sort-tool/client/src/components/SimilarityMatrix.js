@@ -52,7 +52,7 @@ function SimilarityMatrix({ token, selectedSessions }) {
 
       try {
         const cardDataPromises = selectedSessions.map(sessionId =>
-          axios.get(`${process.env.REACT_APP_API_URL}/sessions/${sessionId}`, {
+          axios.get(`/api/sessions/${sessionId}`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         );

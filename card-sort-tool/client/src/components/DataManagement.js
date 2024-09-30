@@ -62,7 +62,7 @@ function DataManagement({ token }) {
   const fetchSessionData = async (sessionIds) => {
     try {
       const sessionDataPromises = sessionIds.map(id => 
-        axios.get(`${process.env.REACT_APP_API_URL}/sessions/${id}`, {
+        axios.get(`/api/sessions/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       );
@@ -120,7 +120,7 @@ function DataManagement({ token }) {
       const exportData = [];
 
       for (const sessionId of selectedSessions) {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/sessions/${sessionId}`, {
+        const response = await axios.get(`/api/sessions/${sessionId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

@@ -64,7 +64,7 @@ function NewSessionDialog({ token, selectedCardSets, setSelectedCardSets, onConf
   useEffect(() => {
     const fetchCardSets = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/card-sets`, {
+        const response = await axios.get(`/api/card-sets`, {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true
         });

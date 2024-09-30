@@ -184,7 +184,7 @@ function ManageCardSetsModal({ onClose, token }) {
 
   const fetchCardSets = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/card-sets`, {
+      const response = await axios.get(`/api/card-sets`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });
@@ -197,7 +197,7 @@ function ManageCardSetsModal({ onClose, token }) {
 
   const fetchCards = async (cardSetId) => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/card-sets/${cardSetId}/cards`, {
+      const response = await axios.get(`/api/card-sets/${cardSetId}/cards`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });
@@ -216,7 +216,7 @@ function ManageCardSetsModal({ onClose, token }) {
     const cardSet = confirmDelete;
     setConfirmDelete(null);
     try {
-      const response = await axios.delete(`${process.env.REACT_APP_API_URL}/card-sets/${cardSet.id}`, {
+      const response = await axios.delete(`/api/card-sets/${cardSet.id}`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });
@@ -324,7 +324,7 @@ function ManageCardSetsModal({ onClose, token }) {
 
   const persistCardSet = async (newCardSet) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/card-sets`, 
+      const response = await axios.post(`/api/card-sets`, 
         {
           name: newCardSet.name,
           cards: newCardSet.cards.map(({ title, text }) => ({ title, text })) // Remove originalIndex
@@ -358,7 +358,7 @@ function ManageCardSetsModal({ onClose, token }) {
 
   const handleSaveCardSetName = async () => {
     try {
-      const response = await axios.put(`${process.env.REACT_APP_API_URL}/card-sets/${editingCardSetId}`, 
+      const response = await axios.put(`/api/card-sets/${editingCardSetId}`, 
         { name: editingName },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -379,7 +379,7 @@ function ManageCardSetsModal({ onClose, token }) {
 
   const handleEditCard = async (cardId, newTitle, newText) => {
     try {
-      const response = await axios.put(`${process.env.REACT_APP_API_URL}/card-sets/cards/${cardId}`, 
+      const response = await axios.put(`/api/card-sets/cards/${cardId}`, 
         { title: newTitle, text: newText },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -395,7 +395,7 @@ function ManageCardSetsModal({ onClose, token }) {
 
   const handleDeleteCard = async (cardId) => {
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/card-sets/cards/${cardId}`, {
+      await axios.delete(`/api/card-sets/cards/${cardId}`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });

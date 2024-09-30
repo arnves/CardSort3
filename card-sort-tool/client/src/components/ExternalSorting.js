@@ -62,7 +62,7 @@ function ExternalSorting() {
 
   const fetchSession = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/external-sorting/${id}`, {
+      const response = await axios.get(`/api/external-sorting/${id}`, {
         headers: { 'X-Password': password }
       });
       setSession(response.data);
@@ -86,7 +86,7 @@ function ExternalSorting() {
 
   const handleCreateCategory = async (name) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/external-sorting/${id}/categories`, 
+      const response = await axios.post(`/api/external-sorting/${id}/categories`, 
         { name },
         { headers: { 'X-Password': password } }
       );
@@ -104,7 +104,7 @@ function ExternalSorting() {
 
   const handleRenameCategory = async (categoryId, newName) => {
     try {
-      await axios.put(`${process.env.REACT_APP_API_URL}/external-sorting/${id}/categories/${categoryId}`,
+      await axios.put(`/api/external-sorting/${id}/categories/${categoryId}`,
         { name: newName },
         { headers: { 'X-Password': password } }
       );
@@ -122,7 +122,7 @@ function ExternalSorting() {
 
   const handleDeleteCategory = async (categoryId) => {
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/external-sorting/${id}/categories/${categoryId}`,
+      await axios.delete(`/api/external-sorting/${id}/categories/${categoryId}`,
         { headers: { 'X-Password': password } }
       );
       setSession(prevSession => {
@@ -140,7 +140,7 @@ function ExternalSorting() {
 
   const handleMoveCard = async (cardId, categoryId) => {
     try {
-      await axios.put(`${process.env.REACT_APP_API_URL}/external-sorting/${id}/cards/${cardId}`,
+      await axios.put(`/api/external-sorting/${id}/cards/${cardId}`,
         { category_id: categoryId },
         { headers: { 'X-Password': password } }
       );
@@ -189,7 +189,7 @@ function ExternalSorting() {
   const handleSubmit = async () => {
     if (window.confirm('Are you sure you want to submit this sorting session?')) {
       try {
-        await axios.post(`${process.env.REACT_APP_API_URL}/external-sorting/${id}/submit`, 
+        await axios.post(`/api/external-sorting/${id}/submit`, 
           {},
           { headers: { 'X-Password': password } }
         );
@@ -233,10 +233,10 @@ function ExternalSorting() {
         <h1>External Card Sorting Session</h1>
         <CardSortingArea
           session={session}
-          apiUrl={`${process.env.REACT_APP_API_URL}/external-sorting/${id}`}
+          apiUrl={`/api/external-sorting/${id}`}
           authHeader={{ 'X-Password': password }}
           onCreateCategory={handleCreateCategory}
-          onRenameCategory={handleRenameCategory}  // Pass the handleRenameCategory function here
+          onRenameCategory={handleRenameCategory}
           onDeleteCategory={handleDeleteCategory}
           onMoveCard={handleMoveCard}
         />

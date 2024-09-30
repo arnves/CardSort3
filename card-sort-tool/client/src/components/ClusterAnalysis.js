@@ -33,7 +33,7 @@ function ClusterAnalysis({ token, selectedSessions }) {
       try {
         const sessionsData = await Promise.all(
           selectedSessions.map(sessionId =>
-            axios.get(`${process.env.REACT_APP_API_URL}/sessions/${sessionId}`, {
+            axios.get(`/api/sessions/${sessionId}`, {
               headers: { Authorization: `Bearer ${token}` }
             })
           )

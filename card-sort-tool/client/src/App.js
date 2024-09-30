@@ -181,7 +181,7 @@ function App() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/sessions`, {
+      const response = await axios.get(`/api/sessions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSessions(response.data);
@@ -198,15 +198,12 @@ function App() {
   const fetchSharingStatus = useCallback(async (sessionId) => {
     if (!sessionId) return;
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/sessions/${sessionId}/sharing-status`, {
+      const response = await axios.get(`/api/sessions/${sessionId}/sharing-status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setIsSharing(response.data.isSharing);
       if (response.data.isSharing && response.data.id) {
-        const clientUrl = process.env.REACT_APP_CLIENT_URL || window.location.origin;
-        const fullSharingUrl = `${clientUrl}/external-sorting/${response.data.id}`;
-        console.log('REACT_APP_CLIENT_URL:', process.env.REACT_APP_CLIENT_URL);
-        console.log('Full Sharing URL:', fullSharingUrl);
+        const fullSharingUrl = `${window.location.origin}/external-sorting/${response.data.id}`;
         setSharingUrl(fullSharingUrl);
       } else {
         setSharingUrl('');
@@ -230,7 +227,7 @@ function App() {
 
   const loadSession = useCallback(async (sessionId) => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/sessions/${sessionId}`, {
+      const response = await axios.get(`/api/sessions/${sessionId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCurrentSession(response.data);
@@ -250,7 +247,7 @@ function App() {
 
   const handleConfirmCreateSession = async (sessionName) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/sessions`, {
+      const response = await axios.post(`/api/sessions`, {
         name: sessionName,
         cardSetIds: selectedCardSets
       }, {
@@ -299,7 +296,7 @@ function App() {
 
   const handleConfirmShare = async (startDate, endDate, password) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}/share`, {
+      const response = await axios.post(`/api/sessions/${currentSession.id}/share`, {
         valid_from: startDate.toISOString(),
         valid_to: endDate.toISOString(),
         password
@@ -307,10 +304,7 @@ function App() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setIsSharing(true);
-      const clientUrl = process.env.REACT_APP_CLIENT_URL || window.location.origin;
-      const fullSharingUrl = `${clientUrl}/external-sorting/${response.data.id}`;
-      console.log('REACT_APP_CLIENT_URL:', process.env.REACT_APP_CLIENT_URL);
-      console.log('Full Sharing URL:', fullSharingUrl);
+      const fullSharingUrl = `${window.location.origin}/external-sorting/${response.data.id}`;
       setSharingUrl(fullSharingUrl);
       setShowShareModal(false);
       await fetchSharingStatus(currentSession.id);  // Fetch the updated sharing status
@@ -338,7 +332,7 @@ function App() {
   const refreshSession = useCallback(async () => {
     if (currentSession) {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}`, {
+        const response = await axios.get(`/api/sessions/${currentSession.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -370,7 +364,7 @@ function App() {
 
   const handleCreateCategory = async (newCategoryName) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}/categories`, 
+      const response = await axios.post(`/api/sessions/${currentSession.id}/categories`, 
         { name: newCategoryName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -394,7 +388,7 @@ function App() {
 
   const handleRenameCategory = async (categoryId, newName) => {
     try {
-      await axios.put(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}/categories/${categoryId}`, 
+      await axios.put(`/api/sessions/${currentSession.id}/categories/${categoryId}`, 
         { name: newName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -414,7 +408,7 @@ function App() {
 
   const handleDeleteCategory = async (categoryId) => {
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}/categories/${categoryId}`, {
+      await axios.delete(`/api/sessions/${currentSession.id}/categories/${categoryId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Update the local state
@@ -434,7 +428,7 @@ function App() {
 
   const handleMoveCard = async (cardId, categoryId) => {
     try {
-      await axios.put(`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}/cards/${cardId}`, {
+      await axios.put(`/api/sessions/${currentSession.id}/cards/${cardId}`, {
         category: categoryId
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -555,7 +549,7 @@ function App() {
                       <CardSortingArea
                         key={JSON.stringify(currentSession.categories)}
                         session={currentSession}
-                        apiUrl={`${process.env.REACT_APP_API_URL}/sessions/${currentSession.id}`}
+                        apiUrl={`/api/sessions/${currentSession.id}`}
                         authHeader={{ Authorization: `Bearer ${token}` }}
                         onCreateCategory={handleCreateCategory}
                         onRenameCategory={handleRenameCategory}

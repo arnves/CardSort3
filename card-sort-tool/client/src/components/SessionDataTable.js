@@ -24,7 +24,7 @@ function SessionDataTable({ data, token }) {
   const fetchAllCategories = async (sessionIds) => {
     try {
       const categoryPromises = sessionIds.map(sessionId => 
-        axios.get(`${process.env.REACT_APP_API_URL}/sessions/${sessionId}`, {
+        axios.get(`/api/sessions/${sessionId}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       );
@@ -70,7 +70,7 @@ function SessionDataTable({ data, token }) {
           // If the category doesn't exist, create it
           if (!categoryInfo) {
             const response = await axios.post(
-              `${process.env.REACT_APP_API_URL}/sessions/${sessionId}/categories`,
+              `/api/sessions/${sessionId}/categories`,
               { name: newValue },
               { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -80,7 +80,7 @@ function SessionDataTable({ data, token }) {
 
           // Update the card's category
           await axios.put(
-            `${process.env.REACT_APP_API_URL}/sessions/${sessionId}/cards/${cardId}`,
+            `/api/sessions/${sessionId}/cards/${cardId}`,
             { category: categoryInfo.id },
             { headers: { Authorization: `Bearer ${token}` } }
           );

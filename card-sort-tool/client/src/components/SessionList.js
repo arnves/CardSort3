@@ -35,7 +35,7 @@ function SessionList({ token, selectedSessions, onSessionSelect }) {
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/sessions`, {
+        const response = await axios.get(`/api/sessions`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSessions(response.data);

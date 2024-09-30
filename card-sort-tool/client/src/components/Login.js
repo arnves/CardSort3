@@ -23,17 +23,10 @@ function Login({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/users/login`,
-        { username, password },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true
-        }
-      );
+      const response = await axios.post('/api/users/login', { username, password });
       onLogin(response.data.token);
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('Login error:', error);
     }
   };
 
