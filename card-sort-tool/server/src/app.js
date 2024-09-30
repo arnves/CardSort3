@@ -5,7 +5,7 @@ const path = require('path');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 // CORS configuration
 const corsOptions = {
@@ -43,27 +43,30 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// Basic route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the Card Sorting Tool API' });
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../../client/build')));
+
+// API routes
+const userRoutes = require('./routes/users');
+const sessionRoutes = require('./routes/sessions');
+const cardRoutes = require('./routes/cards');
+const cardSetRoutes = require('./routes/card-sets');
+const externalSortingRoutes = require('./routes/externalSorting');
+
+app.use('/api/users', userRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/cards', cardRoutes);
+app.use('/api/card-sets', cardSetRoutes);
+app.use('/api/external-sorting', externalSortingRoutes);
+
+// Remove the basic route for '/'
+
+// Catch-all route to serve the React app for any request that doesn't match an API route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../client/build', 'index.html'));
 });
 
 // Start server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-
-const userRoutes = require('./routes/users');
-const sessionRoutes = require('./routes/sessions');
-const cardRoutes = require('./routes/cards');
-const cardSetRoutes = require('./routes/card-sets');
-
-app.use('/api/users', userRoutes);
-app.use('/api/sessions', sessionRoutes);
-app.use('/api/cards', cardRoutes);
-app.use('/api/card-sets', cardSetRoutes);
-
-const externalSortingRoutes = require('./routes/externalSorting');
-
-// Add this line after the existing route definitions
-app.use('/api/external-sorting', externalSortingRoutes);
