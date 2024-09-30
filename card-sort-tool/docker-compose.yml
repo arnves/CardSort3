@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  card-sort-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - JWT_SECRET=your_jwt_secret_here
+      - FRONTEND_URL=http://localhost:3000
+      - REACT_APP_API_URL=http://localhost:3000/api
+      - REACT_APP_CLIENT_URL=http://localhost:3000
+    volumes:
+      - ./server/database.sqlite:/app/server/database.sqlite
+    command: sh -c "cd server && node src/app.js"
+
+volumes:
+  sqlite-data:

@@ -132,8 +132,6 @@ dist
 .DS_Store
 .prettierrc
 database.sqlite*
-docker-compose.yml
-Dockerfile
-.dockerignore
+
 
 build/
