@@ -10,6 +10,7 @@ import DataAnalysis from './components/DataAnalysis';
 import ExternalSorting from './components/ExternalSorting';
 import ShareSessionModal from './components/ShareSessionModal';
 import DataManagement from './components/DataManagement';
+import ChangePasswordModal from './components/ChangePasswordModal';
 import { FaSignOutAlt, FaCopy, FaSync } from 'react-icons/fa';
 
 const AppContainer = styled.div`
@@ -165,6 +166,17 @@ const StageButton = styled.button`
   }
 `;
 
+const ChangePasswordLink = styled.a`
+  color: white;
+  margin-right: 10px;
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: #f0f0f0;
+  }
+`;
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState(null);
@@ -178,6 +190,7 @@ function App() {
   const [isSharing, setIsSharing] = useState(false);
   const [sharingUrl, setSharingUrl] = useState('');
   const [copyNotification, setCopyNotification] = useState('');
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -476,6 +489,14 @@ function App() {
     }
   };
 
+  const handleChangePassword = () => {
+    setShowChangePasswordModal(true);
+  };
+
+  const handleCloseChangePasswordModal = () => {
+    setShowChangePasswordModal(false);
+  };
+
   return (
     <Router>
       <AppContainer>
@@ -489,10 +510,15 @@ function App() {
               <>
                 <TitleBar>
                   <h1>CardSortTool</h1>
-                  <LogoutButton onClick={handleLogout}>
-                    <FaSignOutAlt style={{ marginRight: '5px' }} />
-                    Logout
-                  </LogoutButton>
+                  <div>
+                    <ChangePasswordLink onClick={handleChangePassword}>
+                      Change Password
+                    </ChangePasswordLink>
+                    <LogoutButton onClick={handleLogout}>
+                      <FaSignOutAlt style={{ marginRight: '5px' }} />
+                      Logout
+                    </LogoutButton>
+                  </div>
                 </TitleBar>
                 <StageBar>
                   <StageButton 
@@ -580,6 +606,12 @@ function App() {
                 )}
                 {stage === 'dataAnalysis' && (
                   <DataAnalysis token={token} />
+                )}
+                {showChangePasswordModal && (
+                  <ChangePasswordModal
+                    onClose={handleCloseChangePasswordModal}
+                    token={token}
+                  />
                 )}
               </>
             ) : (
