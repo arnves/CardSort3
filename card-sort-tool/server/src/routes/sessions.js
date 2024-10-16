@@ -5,6 +5,7 @@ const router = express.Router();
 const db = new sqlite3.Database(path.resolve(__dirname, '../../database.sqlite'));
 const authenticateToken = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
+const { shuffle } = require('lodash');
 
 router.get('/', authenticateToken, (req, res) => {
   console.log(`GET /sessions requested by user: ${req.user.id}`);
@@ -29,9 +30,9 @@ router.get('/', authenticateToken, (req, res) => {
 });
 
 router.post('/', authenticateToken, (req, res) => {
-  const { name, cardSetIds } = req.body;
+  const { name, cardSetIds, randomizeOrder, randomPercentage } = req.body;
   const createdDatetime = new Date().toISOString();
-  console.log(`POST /sessions requested by user: ${req.user.id}, name: ${name}, cardSetIds: ${cardSetIds}`);
+  console.log(`POST /sessions requested by user: ${req.user.id}, name: ${name}, cardSetIds: ${cardSetIds}, randomizeOrder: ${randomizeOrder}, randomPercentage: ${randomPercentage}`);
 
   if (!Array.isArray(cardSetIds) || cardSetIds.length === 0) {
     console.log('POST /sessions error: cardSetIds must be a non-empty array');
@@ -58,7 +59,15 @@ router.post('/', authenticateToken, (req, res) => {
             if (err) {
               reject(err);
             } else {
-              const insertPromises = cards.map(card => {
+              let cardsToInsert = cards;
+              if (randomizeOrder) {
+                cardsToInsert = shuffle(cards);
+                if (randomPercentage < 100) {
+                  const cardCount = Math.ceil(cards.length * (randomPercentage / 100));
+                  cardsToInsert = cardsToInsert.slice(0, cardCount);
+                }
+              }
+              const insertPromises = cardsToInsert.map(card => {
                 return new Promise((resolve, reject) => {
                   // Check if the card has already been inserted
                   if (!insertedCardIds.has(card.id)) {

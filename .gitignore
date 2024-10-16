@@ -131,7 +131,7 @@ dist
 
 .DS_Store
 .prettierrc
-database.sqlite*
+*.sqlite
 
 
 build/

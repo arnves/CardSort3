@@ -18,6 +18,7 @@
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
     "papaparse": "^5.4.1",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.0.2",

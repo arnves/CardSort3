@@ -258,11 +258,13 @@ function App() {
     setShowNewSessionDialog(true);
   };
 
-  const handleConfirmCreateSession = async (sessionName) => {
+  const handleConfirmCreateSession = async (sessionName, randomizeOrder, randomPercentage) => {
     try {
       const response = await axios.post(`/api/sessions`, {
         name: sessionName,
-        cardSetIds: selectedCardSets
+        cardSetIds: selectedCardSets,
+        randomizeOrder,
+        randomPercentage
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });

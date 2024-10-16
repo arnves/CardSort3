@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
+import { FaRandom } from 'react-icons/fa';
 
 const DialogOverlay = styled.div`
   position: fixed;
@@ -49,6 +50,22 @@ const CancelButton = styled(Button)`
   }
 `;
 
+const RandomizeIcon = styled(FaRandom)`
+  margin-right: 5px;
+`;
+
+const RandomizeContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+`;
+
+const PercentageInput = styled.input`
+  width: 50px;
+  margin-left: 10px;
+`;
+
 function generateSessionName() {
   const base = "Session ";
   const randomPart = Math.random().toString(36).substring(2, 9).toUpperCase();
@@ -60,6 +77,8 @@ function NewSessionDialog({ token, selectedCardSets, setSelectedCardSets, onConf
   const [cardSets, setCardSets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [randomizeOrder, setRandomizeOrder] = useState(false);
+  const [randomPercentage, setRandomPercentage] = useState(100);
 
   useEffect(() => {
     const fetchCardSets = async () => {
@@ -89,7 +108,12 @@ function NewSessionDialog({ token, selectedCardSets, setSelectedCardSets, onConf
   };
 
   const handleConfirm = () => {
-    onConfirm(sessionName);
+    onConfirm(sessionName, randomizeOrder, randomPercentage);
+  };
+
+  const handleRandomPercentageChange = (e) => {
+    const value = Math.max(1, Math.min(100, parseInt(e.target.value) || 0));
+    setRandomPercentage(value);
   };
 
   if (loading) {
@@ -135,6 +159,30 @@ function NewSessionDialog({ token, selectedCardSets, setSelectedCardSets, onConf
             <label htmlFor={`cardSet-${cardSet.id}`}>{cardSet.name}</label>
           </div>
         ))}
+        <RandomizeContainer>
+          <input
+            type="checkbox"
+            id="randomizeOrder"
+            checked={randomizeOrder}
+            onChange={(e) => setRandomizeOrder(e.target.checked)}
+          />
+          <label htmlFor="randomizeOrder">
+            <RandomizeIcon />
+            Import cards in random order
+          </label>
+          {randomizeOrder && (
+            <>
+              <PercentageInput
+                type="number"
+                value={randomPercentage}
+                onChange={handleRandomPercentageChange}
+                min="1"
+                max="100"
+              />
+              <span>%</span>
+            </>
+          )}
+        </RandomizeContainer>
         <Button onClick={handleConfirm}>Create Session</Button>
         <CancelButton onClick={onCancel}>Cancel</CancelButton>
       </DialogContent>
