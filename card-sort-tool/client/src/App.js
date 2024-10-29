@@ -258,18 +258,31 @@ function App() {
     setShowNewSessionDialog(true);
   };
 
-  const handleConfirmCreateSession = async (sessionName, randomizeOrder, randomPercentage) => {
+  const handleConfirmCreateSession = async (sessionData, isSessionCopy = false) => {
     try {
-      const response = await axios.post(`/api/sessions`, {
-        name: sessionName,
-        cardSetIds: selectedCardSets,
-        randomizeOrder,
-        randomPercentage
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      let response;
+      if (isSessionCopy) {
+        // Handle session copy
+        response = await axios.post(`/api/sessions/copy`, {
+          name: sessionData.name,
+          sourceSessionId: sessionData.sourceSessionId
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        // Handle new session creation from card sets
+        response = await axios.post(`/api/sessions`, {
+          name: sessionData.name,
+          cardSetIds: selectedCardSets,
+          randomizeOrder: sessionData.randomizeOrder,
+          randomPercentage: sessionData.randomPercentage
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+
       const newSession = response.data;
-      setSessions([...sessions, newSession]);
+      setSessions(prevSessions => [...prevSessions, newSession]);
       setShowNewSessionDialog(false);
       setSelectedCardSets([]);
       
@@ -278,7 +291,7 @@ function App() {
       await loadSession(newSession.id);
     } catch (error) {
       console.error('Error creating session:', error);
-      // Handle error (e.g., show an error message to the user)
+      alert('Failed to create session. Please try again.');
     }
   };
 

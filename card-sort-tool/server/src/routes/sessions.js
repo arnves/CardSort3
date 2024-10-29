@@ -325,4 +325,164 @@ router.get('/:sessionId/sharing-status', authenticateToken, (req, res) => {
   );
 });
 
+router.delete('/:sessionId', authenticateToken, (req, res) => {
+  const { sessionId } = req.params;
+  console.log(`DELETE /sessions/${sessionId} requested by user: ${req.user.id}`);
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    // Delete all shared sessions associated with the session
+    db.run('DELETE FROM shared_sessions WHERE session_id = ?', [sessionId], (err) => {
+      if (err) {
+        db.run('ROLLBACK');
+        console.error(`Error deleting shared sessions for session ${sessionId}:`, err);
+        return res.status(500).json({ error: 'Error deleting shared sessions' });
+      }
+
+      // Delete all categories associated with the session
+      db.run('DELETE FROM categories WHERE session_id = ?', [sessionId], (err) => {
+        if (err) {
+          db.run('ROLLBACK');
+          console.error(`Error deleting categories for session ${sessionId}:`, err);
+          return res.status(500).json({ error: 'Error deleting categories' });
+        }
+
+        // Delete all cards associated with the session
+        db.run('DELETE FROM session_card_lists WHERE session_id = ?', [sessionId], (err) => {
+          if (err) {
+            db.run('ROLLBACK');
+            console.error(`Error deleting cards for session ${sessionId}:`, err);
+            return res.status(500).json({ error: 'Error deleting session cards' });
+          }
+
+          // Delete the session itself
+          db.run('DELETE FROM sessions WHERE id = ? AND created_by = ?', [sessionId, req.user.id], function(err) {
+            if (err) {
+              db.run('ROLLBACK');
+              console.error(`Error deleting session ${sessionId}:`, err);
+              return res.status(500).json({ error: 'Error deleting session' });
+            }
+
+            if (this.changes === 0) {
+              db.run('ROLLBACK');
+              console.log(`DELETE /sessions/${sessionId} error: Session not found`);
+              return res.status(404).json({ error: 'Session not found' });
+            }
+
+            db.run('COMMIT');
+            console.log(`DELETE /sessions/${sessionId} response: Session deleted successfully`);
+            res.json({ message: 'Session deleted successfully' });
+          });
+        });
+      });
+    });
+  });
+});
+
+// Add this new route to handle session copying
+router.post('/copy', authenticateToken, (req, res) => {
+  const { name, sourceSessionId } = req.body;
+  const createdDatetime = new Date().toISOString();
+  
+  console.log(`POST /sessions/copy requested by user: ${req.user.id}, name: ${name}, sourceSessionId: ${sourceSessionId}`);
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    // Create new session
+    db.run(
+      'INSERT INTO sessions (name, created_by, created_datetime) VALUES (?, ?, ?)',
+      [name, req.user.id, createdDatetime],
+      function(err) {
+        if (err) {
+          db.run('ROLLBACK');
+          console.error('Error creating new session:', err);
+          return res.status(500).json({ error: 'Error creating session' });
+        }
+
+        const newSessionId = this.lastID;
+
+        // Copy cards from source session
+        db.run(
+          `INSERT INTO session_card_lists (session_id, card_id, title, text)
+           SELECT ?, card_id, title, text
+           FROM session_card_lists
+           WHERE session_id = ?`,
+          [newSessionId, sourceSessionId],
+          (err) => {
+            if (err) {
+              db.run('ROLLBACK');
+              console.error('Error copying cards:', err);
+              return res.status(500).json({ error: 'Error copying cards' });
+            }
+
+            // Copy categories from source session
+            db.all(
+              'SELECT * FROM categories WHERE session_id = ?',
+              [sourceSessionId],
+              (err, categories) => {
+                if (err) {
+                  db.run('ROLLBACK');
+                  console.error('Error fetching categories:', err);
+                  return res.status(500).json({ error: 'Error copying categories' });
+                }
+
+                const categoryPromises = categories.map(category => {
+                  return new Promise((resolve, reject) => {
+                    db.run(
+                      'INSERT INTO categories (name, session_id) VALUES (?, ?)',
+                      [category.name, newSessionId],
+                      function(err) {
+                        if (err) reject(err);
+                        else {
+                          const newCategoryId = this.lastID;
+                          // Update cards with the new category ID
+                          db.run(
+                            `UPDATE session_card_lists 
+                             SET category_id = ? 
+                             WHERE session_id = ? 
+                             AND card_id IN (
+                               SELECT card_id 
+                               FROM session_card_lists 
+                               WHERE session_id = ? 
+                               AND category_id = ?
+                             )`,
+                            [newCategoryId, newSessionId, sourceSessionId, category.id],
+                            (err) => {
+                              if (err) reject(err);
+                              else resolve();
+                            }
+                          );
+                        }
+                      }
+                    );
+                  });
+                });
+
+                Promise.all(categoryPromises)
+                  .then(() => {
+                    db.run('COMMIT');
+                    console.log(`Session copied successfully. New session ID: ${newSessionId}`);
+                    res.status(201).json({
+                      id: newSessionId,
+                      name,
+                      created_by: req.user.id,
+                      created_datetime: createdDatetime
+                    });
+                  })
+                  .catch(err => {
+                    db.run('ROLLBACK');
+                    console.error('Error copying categories:', err);
+                    res.status(500).json({ error: 'Error copying categories' });
+                  });
+              }
+            );
+          }
+        );
+      }
+    );
+  });
+});
+
 module.exports = router;

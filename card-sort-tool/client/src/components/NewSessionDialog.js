@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
-import { FaRandom } from 'react-icons/fa';
+import { FaRandom, FaCopy } from 'react-icons/fa';
 
 const DialogOverlay = styled.div`
   position: fixed;
@@ -66,6 +66,39 @@ const PercentageInput = styled.input`
   margin-left: 10px;
 `;
 
+const TabContainer = styled.div`
+  margin-bottom: 20px;
+`;
+
+const TabButton = styled.button`
+  padding: 8px 16px;
+  margin-right: 10px;
+  background-color: ${props => props.$active ? '#007bff' : '#e9ecef'};
+  color: ${props => props.$active ? 'white' : 'black'};
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${props => props.$active ? '#0056b3' : '#dee2e6'};
+  }
+`;
+
+const TabContent = styled.div`
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+`;
+
 function generateSessionName() {
   const base = "Session ";
   const randomPart = Math.random().toString(36).substring(2, 9).toUpperCase();
@@ -75,28 +108,38 @@ function generateSessionName() {
 function NewSessionDialog({ token, selectedCardSets, setSelectedCardSets, onConfirm, onCancel }) {
   const [sessionName, setSessionName] = useState(generateSessionName());
   const [cardSets, setCardSets] = useState([]);
+  const [existingSessions, setExistingSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [randomizeOrder, setRandomizeOrder] = useState(false);
   const [randomPercentage, setRandomPercentage] = useState(100);
+  const [activeTab, setActiveTab] = useState('cardSets'); // 'cardSets' or 'copy'
+  const [selectedSession, setSelectedSession] = useState('');
 
   useEffect(() => {
-    const fetchCardSets = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/card-sets`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true
-        });
-        setCardSets(response.data);
+        const [cardSetsResponse, sessionsResponse] = await Promise.all([
+          axios.get('/api/card-sets', {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true
+          }),
+          axios.get('/api/sessions', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+        
+        setCardSets(cardSetsResponse.data);
+        setExistingSessions(sessionsResponse.data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching card sets:', error);
-        setError('Error fetching card sets. Please try again.');
+        console.error('Error fetching data:', error);
+        setError('Error fetching data. Please try again.');
         setLoading(false);
       }
     };
 
-    fetchCardSets();
+    fetchData();
   }, [token]);
 
   const handleCardSetToggle = (cardSetId) => {
@@ -107,8 +150,24 @@ function NewSessionDialog({ token, selectedCardSets, setSelectedCardSets, onConf
     }
   };
 
-  const handleConfirm = () => {
-    onConfirm(sessionName, randomizeOrder, randomPercentage);
+  const handleConfirm = async () => {
+    if (activeTab === 'copy' && !selectedSession) {
+      alert('Please select a session to copy');
+      return;
+    }
+
+    if (activeTab === 'cardSets') {
+      onConfirm({
+        name: sessionName,
+        randomizeOrder,
+        randomPercentage
+      }, false);
+    } else {
+      onConfirm({
+        name: sessionName,
+        sourceSessionId: selectedSession
+      }, true);
+    }
   };
 
   const handleRandomPercentageChange = (e) => {
@@ -120,7 +179,7 @@ function NewSessionDialog({ token, selectedCardSets, setSelectedCardSets, onConf
     return (
       <DialogOverlay>
         <DialogContent>
-          <p>Loading card sets...</p>
+          <p>Loading...</p>
         </DialogContent>
       </DialogOverlay>
     );
@@ -147,42 +206,81 @@ function NewSessionDialog({ token, selectedCardSets, setSelectedCardSets, onConf
           onChange={(e) => setSessionName(e.target.value)}
           placeholder="Session Name"
         />
-        <p>Select card sets to import:</p>
-        {cardSets.map(cardSet => (
-          <div key={cardSet.id}>
-            <input
-              type="checkbox"
-              id={`cardSet-${cardSet.id}`}
-              checked={selectedCardSets.includes(cardSet.id)}
-              onChange={() => handleCardSetToggle(cardSet.id)}
-            />
-            <label htmlFor={`cardSet-${cardSet.id}`}>{cardSet.name}</label>
-          </div>
-        ))}
-        <RandomizeContainer>
-          <input
-            type="checkbox"
-            id="randomizeOrder"
-            checked={randomizeOrder}
-            onChange={(e) => setRandomizeOrder(e.target.checked)}
-          />
-          <label htmlFor="randomizeOrder">
-            <RandomizeIcon />
-            Import cards in random order
-          </label>
-          {randomizeOrder && (
+
+        <TabContainer>
+          <TabButton
+            $active={activeTab === 'cardSets'}
+            onClick={() => setActiveTab('cardSets')}
+          >
+            Create from Card Sets
+          </TabButton>
+          <TabButton
+            $active={activeTab === 'copy'}
+            onClick={() => setActiveTab('copy')}
+          >
+            <FaCopy style={{ marginRight: '5px' }} />
+            Copy Existing Session
+          </TabButton>
+        </TabContainer>
+
+        <TabContent>
+          {activeTab === 'cardSets' ? (
             <>
-              <PercentageInput
-                type="number"
-                value={randomPercentage}
-                onChange={handleRandomPercentageChange}
-                min="1"
-                max="100"
-              />
-              <span>%</span>
+              <p>Select card sets to import:</p>
+              {cardSets.map(cardSet => (
+                <div key={cardSet.id}>
+                  <input
+                    type="checkbox"
+                    id={`cardSet-${cardSet.id}`}
+                    checked={selectedCardSets.includes(cardSet.id)}
+                    onChange={() => handleCardSetToggle(cardSet.id)}
+                  />
+                  <label htmlFor={`cardSet-${cardSet.id}`}>{cardSet.name}</label>
+                </div>
+              ))}
+              <RandomizeContainer>
+                <input
+                  type="checkbox"
+                  id="randomizeOrder"
+                  checked={randomizeOrder}
+                  onChange={(e) => setRandomizeOrder(e.target.checked)}
+                />
+                <label htmlFor="randomizeOrder">
+                  <RandomizeIcon />
+                  Import cards in random order
+                </label>
+                {randomizeOrder && (
+                  <>
+                    <PercentageInput
+                      type="number"
+                      value={randomPercentage}
+                      onChange={handleRandomPercentageChange}
+                      min="1"
+                      max="100"
+                    />
+                    <span>%</span>
+                  </>
+                )}
+              </RandomizeContainer>
+            </>
+          ) : (
+            <>
+              <p>Select a session to copy:</p>
+              <Select
+                value={selectedSession}
+                onChange={(e) => setSelectedSession(e.target.value)}
+              >
+                <option value="">Select a session...</option>
+                {existingSessions.map(session => (
+                  <option key={session.id} value={session.id}>
+                    {session.name} ({new Date(session.created_datetime).toLocaleDateString()})
+                  </option>
+                ))}
+              </Select>
             </>
           )}
-        </RandomizeContainer>
+        </TabContent>
+
         <Button onClick={handleConfirm}>Create Session</Button>
         <CancelButton onClick={onCancel}>Cancel</CancelButton>
       </DialogContent>

@@ -11,9 +11,7 @@ services:
       - PORT=3000
       - JWT_SECRET=your_jwt_secret_here
       - HOST_URL=http://localhost:3000
+      - NODE_ENV=production  # Set NODE_ENV to 'production'
     volumes:
       - ./server/database.sqlite:/app/server/database.sqlite
     command: sh -c "cd server && node src/app.js"
-
-volumes:
-  sqlite-data:

@@ -29,7 +29,7 @@ const SessionDetails = styled.p`
   color: #666;
 `;
 
-function SessionList({ token, selectedSessions, onSessionSelect }) {
+function SessionList({ token, selectedSessions, onSessionSelect, refreshTrigger }) {
   const [sessions, setSessions] = useState([]);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ function SessionList({ token, selectedSessions, onSessionSelect }) {
     };
 
     fetchSessions();
-  }, [token]);
+  }, [token, refreshTrigger]);
 
   useEffect(() => {
     console.log('Selected sessions:', selectedSessions);

@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import SessionList from './SessionList';
 import SessionDataTable from './SessionDataTable';
 import axios from 'axios';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const DataManagementContainer = styled.div`
   display: flex;
@@ -50,6 +52,23 @@ const TableContainer = styled.div`
 function DataManagement({ token }) {
   const [selectedSessions, setSelectedSessions] = useState([]);
   const [tableData, setTableData] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  const fetchSessions = async () => {
+    try {
+      const response = await axios.get('/api/sessions', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSessions(response.data);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    }
+  };
 
   useEffect(() => {
     if (selectedSessions.length > 0) {
@@ -172,10 +191,52 @@ function DataManagement({ token }) {
     }
   };
 
+  const handleDeleteSessions = () => {
+    if (selectedSessions.length === 0) {
+      alert("Please select at least one session to delete.");
+      return;
+    }
+
+    const sessionNames = sessions
+      .filter(session => selectedSessions.includes(session.id))
+      .map(session => session.name)
+      .join(', ');
+
+    confirmAlert({
+      title: 'Confirm to delete',
+      message: `Are you sure you want to delete the following sessions: ${sessionNames}?`,
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              await Promise.all(selectedSessions.map(sessionId =>
+                axios.delete(`/api/sessions/${sessionId}`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                })
+              ));
+              alert('Sessions deleted successfully.');
+              setSelectedSessions([]);
+              setRefreshTrigger(prev => prev + 1);
+              setTableData([]);
+            } catch (error) {
+              console.error('Error deleting sessions:', error);
+              alert('Failed to delete sessions. Please try again.');
+            }
+          }
+        },
+        {
+          label: 'No'
+        }
+      ]
+    });
+  };
+
   return (
     <DataManagementContainer>
       <SubMenu>
         <Button onClick={handleExportData}>Export Data</Button>
+        <Button onClick={handleDeleteSessions}>Delete Sessions</Button>
       </SubMenu>
       <ContentContainer>
         <SessionListContainer>
@@ -183,6 +244,7 @@ function DataManagement({ token }) {
             token={token}
             selectedSessions={selectedSessions}
             onSessionSelect={handleSessionSelect}
+            refreshTrigger={refreshTrigger}
           />
         </SessionListContainer>
         <TableContainer>

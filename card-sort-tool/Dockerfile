@@ -5,7 +5,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Install necessary build tools and dependencies
-RUN apk add --no-cache python3 py3-setuptools make g++ sqlite-dev
+RUN apk add --no-cache python3 py3-setuptools make g++ sqlite-dev certbot
 
 # Copy package.json and package-lock.json for both client and server
 COPY client/package*.json ./client/

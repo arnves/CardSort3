@@ -60,6 +60,12 @@ app.use('/api/external-sorting', externalSortingRoutes);
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../../client/build')));
+
+// **CERTBOT WEBROOT CONFIGURATION**
+// This line is crucial for Certbot's webroot plugin.
+// It serves the '.well-known' directory from your React app's build folder.
+app.use('/.well-known', express.static(path.join(__dirname, '../../client/build/.well-known'))); 
+
 // Catch-all route to serve the React app for any request that doesn't match an API route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../../client/build', 'index.html'));
