@@ -41,12 +41,14 @@ function ClusterAnalysis({ token, selectedSessions }) {
 
         const nodes = new Map();
         const edges = new Map();
-        const totalSessions = sessionsData.length;
+        const cardAppearances = new Map(); // Track sessions where pairs of cards appear
 
         sessionsData.forEach(({ data: session }) => {
-          const sessionEdges = new Set();
+          // Get all cards in this session
+          const sessionCards = new Set();
           Object.values(session.categories).forEach(category => {
-            category.cards.forEach((card, i) => {
+            category.cards.forEach(card => {
+              sessionCards.add(card.title);
               if (!nodes.has(card.title)) {
                 nodes.set(card.title, { 
                   id: card.title, 
@@ -56,6 +58,26 @@ function ClusterAnalysis({ token, selectedSessions }) {
               } else {
                 nodes.get(card.title).categories.add(category.name);
               }
+            });
+          });
+
+          // Update appearances count for each pair of cards present in this session
+          const cardArray = Array.from(sessionCards);
+          for (let i = 0; i < cardArray.length; i++) {
+            for (let j = i + 1; j < cardArray.length; j++) {
+              const edgeId = [cardArray[i], cardArray[j]].sort().join('_');
+              if (!cardAppearances.has(edgeId)) {
+                cardAppearances.set(edgeId, 1);
+              } else {
+                cardAppearances.set(edgeId, cardAppearances.get(edgeId) + 1);
+              }
+            }
+          }
+
+          // Track co-occurrences within categories
+          const sessionEdges = new Set();
+          Object.values(session.categories).forEach(category => {
+            category.cards.forEach((card, i) => {
               for (let j = i + 1; j < category.cards.length; j++) {
                 const otherCard = category.cards[j];
                 const edgeId = [card.title, otherCard.title].sort().join('_');
@@ -63,19 +85,29 @@ function ClusterAnalysis({ token, selectedSessions }) {
               }
             });
           });
+
           sessionEdges.forEach(edgeId => {
             if (!edges.has(edgeId)) {
-              edges.set(edgeId, { source: edgeId.split('_')[0], target: edgeId.split('_')[1], value: 1 });
+              edges.set(edgeId, { 
+                source: edgeId.split('_')[0], 
+                target: edgeId.split('_')[1], 
+                value: 1 
+              });
             } else {
               edges.get(edgeId).value += 1;
             }
           });
         });
 
-        const normalizedEdges = Array.from(edges.values()).map(edge => ({
-          ...edge,
-          value: edge.value / totalSessions
-        }));
+        // Normalize edges by number of sessions where both cards appear
+        const normalizedEdges = Array.from(edges.values()).map(edge => {
+          const edgeId = [edge.source, edge.target].sort().join('_');
+          const appearances = cardAppearances.get(edgeId);
+          return {
+            ...edge,
+            value: appearances > 0 ? edge.value / appearances : 0
+          };
+        });
 
         const nodesWithCategories = Array.from(nodes.values()).map(node => ({
           ...node,
