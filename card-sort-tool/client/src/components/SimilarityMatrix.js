@@ -76,9 +76,28 @@ function SimilarityMatrix({ token, selectedSessions }) {
       )
     ))];
 
+    // Initialize matrices for co-occurrences and session appearances
     const matrix = Array(allCards.length).fill(null).map(() => Array(allCards.length).fill(0));
+    const cardAppearances = Array(allCards.length).fill(null).map(() => Array(allCards.length).fill(0));
 
     sessions.forEach(session => {
+      // Get all cards in this session
+      const sessionCards = new Set(
+        Object.values(session.categories).flatMap(category => 
+          category.cards.map(card => card.title)
+        )
+      );
+
+      // Update appearances count for each pair of cards present in this session
+      for (let i = 0; i < allCards.length; i++) {
+        for (let j = i + 1; j < allCards.length; j++) {
+          if (sessionCards.has(allCards[i]) && sessionCards.has(allCards[j])) {
+            cardAppearances[i][j]++;
+            cardAppearances[j][i]++;
+          }
+        }
+      }
+
       const cardsByCategory = {};
       Object.values(session.categories).forEach(category => {
         if (category.name !== 'Unsorted') {
@@ -100,7 +119,12 @@ function SimilarityMatrix({ token, selectedSessions }) {
       });
     });
 
-    const normalizedMatrix = matrix.map(row => row.map(cell => cell / sessions.length));
+    // Normalize by number of sessions where both cards appear
+    const normalizedMatrix = matrix.map((row, i) => 
+      row.map((cell, j) => 
+        cardAppearances[i][j] > 0 ? cell / cardAppearances[i][j] : 0
+      )
+    );
 
     return { matrix: normalizedMatrix, cards: allCards };
   };
